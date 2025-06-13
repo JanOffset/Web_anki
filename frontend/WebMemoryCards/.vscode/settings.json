@@ -1,0 +1,15 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 8080,
+            "askForPassword": true,
+            "driver": "PostgreSQL",
+            "name": "Web_anki_db",
+            "database": "Web_anki",
+            "username": "JanAdmin",
+            "connectionTimeout": 30
+        }
+    ]
+}

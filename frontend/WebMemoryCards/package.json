@@ -1,0 +1,11 @@
+{
+  "name": "webanki",
+  "version": "1.0.0",
+  "description": "This is a clone version of anki, I am doing it to improve my skills.",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Trayan Shterionov",
+  "license": "ISC"
+}
