@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { query, checkSchema, matchedData, validationResult, body } from "express-validator";
-import { checkValidationSchemas, checkQuerryValidationSchemas, checkIdValidationSchemas } from '../utils/validationSchemas.mjs'
+import { checkValidationSchemas, checkQuerryValidationSchemas} from '../utils/validationSchemas.mjs'
 import {decks} from '../utils/consts.mjs'
 const router = Router();
 
@@ -8,22 +8,22 @@ const findDeckIndexById = (req, res, next) => {
     const {
         params: { id },
     } = req;
-
     const parsedId = parseInt(id);
     if (isNaN(parsedId)) return res.sendStatus(400);
     const findDeckIndex = decks.findIndex((deck) => deck.id === parsedId)
     if (findDeckIndex === -1) return res.sendStatus(400);
-    req.findDeckIndex = req;
+    req.findDeckIndex = findDeckIndex;
     next();
 }
 
-router.get("/api/decks",
+router.get("/api/decks/",
     checkSchema(checkQuerryValidationSchemas), 
     (req, res) => {
         const result = validationResult(req);
         const data = matchedData(req)
         
-        if (data.filter && data.value) return res.send(decks.filter((deck) => deck[data.filter].includes(data.value)));
+        if (data.filter && data.value)
+            return res.send(decks.filter((deck) => deck[data.filter].includes(data.value)));
         
         console.log(result)    
     return res.send(decks);
@@ -31,21 +31,13 @@ router.get("/api/decks",
 
 router.get('/api/decks/:id',
     findDeckIndexById,
-    checkSchema(checkIdValidationSchemas),
     (req, res) => {
-        console.log(req.findDeckIndex + " this is the findDeckindex");
-        console.log(req.id + " this is the id")
-        const result = validationResult(req);
-        const data = matchedData(req);
-        console.log(data + "this is the decks index")
-        console.log(result)
         const {
             findDeckIndex,
         } = req;
-        console.log(findDeckIndex + "findDeckIndex")
         const findDeck = decks[findDeckIndex];
-        console.log(findDeck + "findDeck")
-        if (!findDeck) return res.sendStatus(400);
+
+        if (!findDeck) return res.sendStatus(404);
     return res.send(findDeck);
 });
 

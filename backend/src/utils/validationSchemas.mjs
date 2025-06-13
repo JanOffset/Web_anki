@@ -27,27 +27,6 @@ export const checkValidationSchemas = {
 
 }
 
-export const checkIdValidationSchemas = {
-    findDeckIndex: {
-        notEmpty: {
-            errorMessage:
-                "Must not be empty"
-        },
-        isString: {
-            errorMessage:
-                "Must be a string"
-        },
-        isLength: {
-            options: {
-                min: 1,
-                max: 3
-            },
-            errorMessage: 
-                "Must be between 1 and 3 numbers"
-        }
-    }
-}
-
 export const checkQuerryValidationSchemas = {
     filter: {
         isString: {
