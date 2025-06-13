@@ -26,23 +26,51 @@ export const checkValidationSchemas = {
     }
 
 }
+
+export const checkIdValidationSchemas = {
+    findDeckIndex: {
+        notEmpty: {
+            errorMessage:
+                "Must not be empty"
+        },
+        isString: {
+            errorMessage:
+                "Must be a string"
+        },
+        isLength: {
+            options: {
+                min: 1,
+                max: 3
+            },
+            errorMessage: 
+                "Must be between 1 and 3 numbers"
+        }
+    }
+}
+
 export const checkQuerryValidationSchemas = {
     filter: {
-        optional: true,
         isString: {
             errorMessage:
                 "Filter must be string"
+        },
+        isLength: {
+            options: {
+                min: 1,
+                max: 10
+            },
+            errorMessage:
+                "Must be between 1 and 10"
         }
     },
     value: {
-        optional: true,
-        isString: {
-            errorMessage:
-                "Filter value must be string"
-        },
         isLength: {
-            min: 1,
-            max: 10
+            options: {
+                min: 1,
+                max: 10
+            },
+            errorMessage: 
+                "Must be between 5 and 10"
         }
     }
 }
