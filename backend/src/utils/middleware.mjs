@@ -13,7 +13,11 @@ export const findDeckIndexById = (req, res, next) => {
 }
 
 export const findDeckIndexByName = (req, res, next) => {
-    const { params: { deckName } } = req;
+    const { 
+        params: {
+            deckName 
+        } 
+    } = req;
     const findDeckByName = decks.findIndex((deck) => deck.deck_name === deckName)
     const parsedName = parseInt(deckName);
     if (!isNaN(parsedName)) return res.sendStatus(400);
@@ -24,12 +28,20 @@ export const findDeckIndexByName = (req, res, next) => {
 
 export const findCardIndexById = (req, res, next) => {
     const {
-        params: { cardId, deckName },
+        params: {
+            cardId
+        },
+        findDeckByName
     } = req;
     const parsedId = parseInt(cardId);
+    
     if (isNaN(parsedId)) return res.sendStatus(400);
-    const findCardIndex = decks.findIndex((deck) => deck.id === parsedId && deck.deck_name === deckName)
-    if (findCardIndex === -1) return res.sendStatus(400);
-    req.findCardIndex = findCardIndex;
+    const findCard = decks[findDeckByName].cards;
+    
+    if (!findCard) return res.sendStatus(400);
+    const indexOfCard = findCard.findIndex((card) => card.card_id === parsedId);
+    
+    if (indexOfCard === -1) return res.sendStatus(404);
+    req.indexOfCard = indexOfCard;
     next();
 }

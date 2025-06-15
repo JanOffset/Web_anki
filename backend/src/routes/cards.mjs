@@ -20,16 +20,17 @@ router.get("/api/decks/:deckName/cards/",
 
 router.get('/api/decks/:deckName/cards/:cardId',
     findDeckIndexByName,
+    findCardIndexById,
     (req, res) => { 
         const {
             findDeckByName,
-            params: { cardId }
+            indexOfCard
         } = req;
         const findDeck = decks[findDeckByName];
-
         if (!findDeck) return res.sendStatus(404);
-        const findCard = findDeck.cards.card_id === cardId;
-    return res.send(findDeck.cards);
+        const findCard = findDeck.cards[indexOfCard];
+
+    return res.send(findCard);
 });
 
 router.put('/api/decks/:id', findDeckIndexById, (req, res) => {
