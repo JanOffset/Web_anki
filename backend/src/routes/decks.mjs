@@ -11,12 +11,15 @@ router.get("/api/decks/",
         const result = validationResult(req);
         const data = matchedData(req)
         
-        if (data.filter && data.value)
-            return res.send(decks.filter((deck) => deck[data.filter].includes(data.value)));
-        
-        console.log(result)    
-    return res.send(decks);
-});
+        if (!result.isEmpty()) return res.status(400).send({ errors: result.array()})
+
+        if (data.filter && data.value) return res.send(decks.filter(
+            (deck) => deck[data.filter].includes(data.value))
+        );
+
+        return res.send(decks);
+    }
+);
 
 router.get('/api/decks/:id',
     findDeckIndexById,
@@ -64,7 +67,7 @@ router.post('/api/decks', checkSchema(checkValidationSchemas),
     
     if (!result.isEmpty()) return res.status(400).send({ errors: result.array() })
 
-    const newDeck = {id: decks[decks.length - 1].id + 1, ...data};
+    const newDeck = {id: decks[decks.length].id, ...data};
     decks.push(newDeck);
     return res.status(201).send(newDeck);
 });

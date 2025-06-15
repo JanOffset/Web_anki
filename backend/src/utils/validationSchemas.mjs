@@ -27,29 +27,22 @@ export const checkValidationSchemas = {
 
 }
 
-export const checkCardQuerryValidationSchemas = {
-    deckName: {
+export const checkCardValidationSchemas = {
+    filter: {
         isString: {
             errorMessage:
-                "Deck name must be string"
+                "Card filter must be string"
+        }
+    },
+    value: {
+        isString: {
+            errorMessage:
+                "Card value must be string"
         },
         isLength: {
             options: {
-                min: 5,
-                max: 10
-            },
-            errorMessage:
-                "Deck name must be between 5 and 10 letters"
-        }
-    },
-    card: {
-        isLength: {
-            options: {
-                min: 1,
-                max: 3
-            },
-            errorMessage:
-                "Card must be between 1 and 3 digits"
+                min: 1
+            }
         }
     }
 }
@@ -59,14 +52,6 @@ export const checkQuerryValidationSchemas = {
         isString: {
             errorMessage:
                 "Filter must be string"
-        },
-        isLength: {
-            options: {
-                min: 1,
-                max: 10
-            },
-            errorMessage:
-                "Must be between 1 and 10"
         }
     },
     value: {
