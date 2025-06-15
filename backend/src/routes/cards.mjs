@@ -1,33 +1,35 @@
 import { Router } from "express";
-import { query, checkSchema, matchedData, validationResult, body } from "express-validator";
-import { checkValidationSchemas, checkQuerryValidationSchemas} from '../utils/validationSchemas.mjs'
-import {decks} from '../utils/consts.mjs'
-import {findDeckIndexById} from "../utils/middleware.mjs"
+import { checkSchema, matchedData, validationResult } from "express-validator";
+import { checkCardQuerryValidationSchemas, checkValidationSchemas } from "../utils/validationSchemas.mjs";
+import { findCardIndexById, findDeckIndexById, findDeckIndexByName } from "../utils/middleware.mjs";
+import { decks } from "../utils/consts.mjs";
+
 const router = Router();
 
-router.get("/api/decks/",
-    checkSchema(checkQuerryValidationSchemas), 
-    (req, res) => {
-        const result = validationResult(req);
-        const data = matchedData(req)
-        
-        if (data.filter && data.value)
-            return res.send(decks.filter((deck) => deck[data.filter].includes(data.value)));
-        
-        console.log(result)    
-    return res.send(decks);
-});
-
-router.get('/api/decks/:id',
-    findDeckIndexById,
-    (req, res) => {
+router.get("/api/decks/:deckName/cards/",
+    findDeckIndexByName,
+    (req, res) => { 
         const {
-            findDeckIndex,
+            findDeckByName
         } = req;
-        const findDeck = decks[findDeckIndex];
+        const findDeck = decks[findDeckByName];
 
         if (!findDeck) return res.sendStatus(404);
-    return res.send(findDeck);
+    return res.send(findDeck.cards);
+});
+
+router.get('/api/decks/:deckName/cards/:cardId',
+    findDeckIndexByName,
+    (req, res) => { 
+        const {
+            findDeckByName,
+            params: { cardId }
+        } = req;
+        const findDeck = decks[findDeckByName];
+
+        if (!findDeck) return res.sendStatus(404);
+        const findCard = findDeck.cards.card_id === cardId;
+    return res.send(findDeck.cards);
 });
 
 router.put('/api/decks/:id', findDeckIndexById, (req, res) => {
@@ -68,5 +70,6 @@ router.post('/api/decks', checkSchema(checkValidationSchemas),
     decks.push(newDeck);
     return res.status(201).send(newDeck);
 });
+
 
 export default router;
