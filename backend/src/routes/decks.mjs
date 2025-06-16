@@ -28,13 +28,14 @@ router.get('/api/decks/:id',
         const findDeck = decks[findDeckIndex];
 
         if (!findDeck) return res.sendStatus(404);
-        console.log(req.header.cookies);
-        console.log(req.cookies)
-        if (req.cookies.rememberme && req.cookies.rememberme === "1") {
+        console.log(req.headers.cookie)
+        console.log(req.signedCookies);
+        console.log(req.signedCookies.rememberme)
+        if (req.signedCookies.rememberme && req.signedCookies.rememberme === "1") {
             return res.send(findDeck);       
         }
 
-        return res.send({ msg: "you need the right cookie" })
+        return res.status(403).send({ msg: "you need the right cookie" })
     }
 );
 
