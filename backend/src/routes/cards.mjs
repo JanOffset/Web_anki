@@ -23,8 +23,8 @@ router.get("/api/decks/:deckName/cards/",
 
         if (data.filter && data.value) return res.send(findDeck.cards.filter(
             (card) => card[data.filter].includes(data.value))
-        )
-        
+        );
+
         return res.send(findDeck.cards);
     }
 );

@@ -10,8 +10,6 @@ router.get("/api/decks/",
     (req, res) => {
         const result = validationResult(req);
         const data = matchedData(req)
-        
-        if (!result.isEmpty()) return res.status(400).send({ errors: result.array()})
 
         if (data.filter && data.value) return res.send(decks.filter(
             (deck) => deck[data.filter].includes(data.value))
@@ -30,8 +28,15 @@ router.get('/api/decks/:id',
         const findDeck = decks[findDeckIndex];
 
         if (!findDeck) return res.sendStatus(404);
-    return res.send(findDeck);
-});
+        console.log(req.header.cookies);
+        console.log(req.cookies)
+        if (req.cookies.rememberme && req.cookies.rememberme === "1") {
+            return res.send(findDeck);       
+        }
+
+        return res.send({ msg: "you need the right cookie" })
+    }
+);
 
 router.put('/api/decks/:id', findDeckIndexById, (req, res) => {
     
@@ -60,7 +65,7 @@ router.delete('/api/decks/:id', findDeckIndexById, (req, res) => {
     return res.sendStatus(200);
 });
 
-router.post('/api/decks', checkSchema(checkValidationSchemas),
+router.post('/api/decks/', checkSchema(checkValidationSchemas),
     (req, res) => {
     const data = matchedData(req);
     const result = validationResult(req);
