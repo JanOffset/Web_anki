@@ -27,6 +27,33 @@ export const checkValidationSchemas = {
 
 }
 
+export const userValidationSchema = {
+    username: {
+        isLength: {
+            options: {
+                min: 1,
+                max: 10
+            },
+            errorMessage: 
+                "username must be between 1 and 10 letters"
+        },
+        notEmpty: {
+            errorMessage:
+                "username must not be empty"
+        },
+        isString: {
+            errorMessage: 
+                "username must be string"
+        }
+    },
+    displayname: {
+        notEmpty: true
+    },
+    password: {
+        notEmpty: true
+    },
+}
+
 export const checkCardValidationSchemas = {
     filter: {
         isString: {

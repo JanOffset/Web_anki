@@ -3,11 +3,19 @@ import routes from './routes/index.mjs'
 import cookieParser from "cookie-parser"
 import session from "express-session"
 import passport from "passport";
+import 'dotenv/config'
 import "./strategies/local-strategy.mjs"
+import mongoose from "mongoose"
+// import runDbMigration from "../migration/runDbMigration.mjs";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+mongoose.connect('mongodb://localhost:27017/Web_anki')
+    .then(() => console.log("Connected to database"))
+    .catch((err) => console.log(err))
+// await runDbMigration();
+// orm oriented
 app.use(
     session({
         secret: "sessionSecret123",

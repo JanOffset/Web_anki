@@ -1,24 +1,24 @@
 import passport from "passport";
 import { Strategy } from 'passport-local'
 import { decks } from "../utils/consts.mjs";
+import { User } from "../mongoose/schemas/user.mjs"
 
-passport.serializeUser((deck, done) => {
+passport.serializeUser((user, done) => {
         console.log("inside serialize user")
-        console.log("Serialize User ID " + deck.id)
-        console.log(deck)
+        console.log("Serialize User ID " + user.id)
+        console.log(user)
         
-        done(null, deck.id)
+        done(null, user.id)
     }
 )
 
-passport.deserializeUser((id, done) => {
+passport.deserializeUser(async (id, done) => {
     console.log("inside user deserialization")    
     console.log("Deserialize User ID")
-    const parsedId = parseInt(id)
         try {
-            const findDeck = decks.find((deck) => deck.id === parsedId);
-            if (!findDeck) throw new Error("Deck not found")
-                done(null, findDeck)
+            const findUser = await User.findById({ id });
+            if (!findUser) throw new Error("User not found")
+                done(null, findUser)
         } catch (err) {
             done(err, null)
         }
@@ -26,14 +26,14 @@ passport.deserializeUser((id, done) => {
 )
 
 export default passport.use(
-    new Strategy({ usernameField: "deckName"}, (username, password, done) => {
+    new Strategy(async (username, password, done) => {
         console.log(`deck: ${username}`);
         console.log(`password: ${password}`)
         try {
-            const findDeck = decks.find((deck) => deck.deck_name === username);
-            if (!findDeck) throw new Error("deck not found");
-            if (findDeck.password !== password) throw new Error("invalid credentials")
-            done(null, findDeck);
+            const findUser = await User.findOne({ username });
+            if (!findUser) throw new Error("User not found");
+            if (findUser.password !== password) throw new Error("Bad credentials"); 
+            done(null, findUser)
         } catch (err) {
             done(err, null);
         }
