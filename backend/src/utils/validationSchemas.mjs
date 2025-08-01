@@ -1,4 +1,4 @@
-export const checkValidationSchemas = {
+export const deckValidationSchemas = {
     deck_name: {
         isLength: {
             options: {
@@ -19,10 +19,16 @@ export const checkValidationSchemas = {
         }
     },
     alternative: {
-        notEmpty: {
-            errorMessage: 
-                "Alternative name must not be empty"
+        optional: true,
+        isString: {
+            errorMessage:
+                "The alternative deckname must be string"
         }
+    },
+    cards: {
+        optional: true,
+        isArray: true,
+        isEmpty: true
     }
 
 }

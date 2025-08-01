@@ -1,81 +1,128 @@
 import { Router } from "express";
-import { query, checkSchema, matchedData, validationResult, body } from "express-validator";
-import { checkValidationSchemas, checkQuerryValidationSchemas} from '../utils/validationSchemas.mjs'
-import {decks} from '../utils/consts.mjs'
-import {findDeckIndexById} from "../utils/middleware.mjs"
+import { checkSchema, matchedData, validationResult } from "express-validator";
+import { deckValidationSchemas } from '../utils/validationSchemas.mjs'
+import { Deck } from "../mongoose/schemas/deck.mjs"; 
+import { findDeckByName } from "../utils/middleware.mjs";
+import { userLoggedIn } from "../utils/middleware.mjs";
+
 const router = Router();
 
-router.get("/api/decks/",
-    checkSchema(checkQuerryValidationSchemas), 
-    (req, res) => {
-        const result = validationResult(req);
-        const data = matchedData(req)
-
-        if (data.filter && data.value) return res.send(decks.filter(
-            (deck) => deck[data.filter].includes(data.value))
-        );
-
-        return res.send(decks);
-    }
-);
-
-router.get('/api/decks/:id',
-    findDeckIndexById,
-    (req, res) => {
-        const {
-            findDeckIndex,
-        } = req;
-        const findDeck = decks[findDeckIndex];
-
-        if (!findDeck) return res.sendStatus(404);
-        console.log(req.headers.cookie)
-        console.log(req.signedCookies);
-        console.log(req.signedCookies.rememberme)
-        if (req.signedCookies.rememberme && req.signedCookies.rememberme === "1") {
-            return res.send(findDeck);       
+//display deck by name, or all decks if not found
+router.get('/api/deck', userLoggedIn, async (req, res) => {
+    const { 
+        body: {
+            deckname
+        },
+        user: {
+            id
         }
-
-        return res.status(403).send({ msg: "you need the right cookie" })
+    } = req;
+    
+    const deck = await findDeckByName(deckname, id);
+    
+    if (deck) {
+        const deckInfo = {
+            name: deck.deckname,
+            alternative: deck.alternativeName,
+            cardCount: deck.cards ? deck.cards.length : 0,
+            
+        };
+        return res.send(deckInfo);
     }
-);
-
-router.put('/api/decks/:id', findDeckIndexById, (req, res) => {
     
-    const { 
-        findDeckIndex,
-        body
-    } = req;
+    //if deck not found return all decks
+    const dbDecks = await Deck.find();
+    const allDecks = dbDecks.map(deck => ({
+        name: deck.deckname,
+        alternative: deck.alternativeName,
+        cardCount: deck.cards ? deck.cards.length : 0,
+    }));
     
-    decks[findDeckIndex] = { id: decks[findDeckIndex].id, ...body};
-    return res.sendStatus(200);
-})
-
-router.patch('/api/decks/:id', findDeckIndexById, (req, res) => {
-    const { 
-        findDeckIndex,
-        body
-    } = req;
-    
-    decks[findDeckIndex] = { ...decks[findDeckIndex], ...body};
-    return res.sendStatus(200);
+    return res.send(allDecks);
 });
 
-router.delete('/api/decks/:id', findDeckIndexById, (req, res) => {
-    const { findDeckIndex } = req;
-    decks.splice(findDeckIndex, 1);
-    return res.sendStatus(200);
-});
-
-router.post('/api/decks/', checkSchema(checkValidationSchemas),
-    (req, res) => {
-    const data = matchedData(req);
+//add new deck
+router.post('/api/deck/create', userLoggedIn, checkSchema(deckValidationSchemas), async (req, res) => {
     const result = validationResult(req);
+    if (!result.isEmpty()) {
+        return res.status(400).send({ errors: result.array() });
+    }
     
-    if (!result.isEmpty()) return res.status(400).send({ errors: result.array() })
-
-    const newDeck = {id: decks[decks.length].id, ...data};
-    decks.push(newDeck);
-    return res.status(201).send(newDeck);
+    const data = matchedData(req);
+    const newDeck = new Deck({...data, userId: req.user.id});
+    
+    //ccheck if deckname exists
+    const existingDeck = await Deck.findOne({ deckname: data.deckname, userId: req.user.id})
+    if (existingDeck) {
+        return res.status(400).send({ error: 'Deck name already exists' });
+    }
+   
+    try { 
+        await newDeck.save();
+        return res.status(201).send({message: 'Deck created'});   
+    } catch (err) {
+        console.log(err);
+        return res.sendStatus(400);
+    }
 });
+
+//remove deck by name
+router.delete('/api/deck/remove', userLoggedIn, async (req, res) => {
+    const { 
+        body: {
+            deckname
+        },
+        user: {
+            id
+        }
+    } = req;
+    const deck = await findDeckByName(deckname, id);
+    if (!deck) return res.send({error: "Deck doesnt exist"}).status(400);
+    await Deck.findOneAndDelete(deck);
+    
+    return res.sendStatus(200);
+});
+
+//rename deck
+router.patch('/api/deck/edit', userLoggedIn, async (req, res) => {
+    const { 
+        body: {
+            deckname,   
+            newName,
+            newAltName
+        },
+        user: {
+            id
+        }
+    } = req;
+    
+    if (!newName) {
+        return res.status(400).send({ error: 'New name is required' });
+    }
+    
+    
+    const deckIndex = decks.findIndex(deck => deck.name === convertNameFromUrl(deckname));
+    
+    if (deckIndex === -1) {
+        return res.status(404).send({ error: 'Deck not found' });
+    }
+    
+    //if new name already exists
+    const existingDeck = decks.find(deck => deck.name === newName);
+    if (existingDeck) {
+        return res.status(400).send({ error: 'Deck name already exists' });
+    }
+    
+    decks[deckIndex].name = newName;
+    
+    const deckInfo = {
+        name: decks[deckIndex].name,
+        cardCount: decks[deckIndex].cards ? decks[deckIndex].cards.length : 0,
+        id: decks[deckIndex].id
+    };
+    
+    return res.send(deckInfo);
+});
+
 
 export default router;

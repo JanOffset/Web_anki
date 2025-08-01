@@ -35,38 +35,6 @@ app.use(cookieParser("cookieSecret213"));
 
 app.use(routes);
 
-app.post("/api/auth", passport.authenticate("local"), (req,res) => {
-        res.sendStatus(200);
-    }
-);
-
-app.post("/api/auth/logout", (req, res) => {
-    if (!req.user) return req.sendStatus(401);
-    req.logOut((err) => {
-        if (err) return res.sendStatus(400);
-        res.send(200)
-    })
-})
-
-app.get("/api/auth/status", (req, res) => {
-    console.log("inside /auth/api/status endpoint")
-    console.log(req.user)
-    console.log(req.session)
-    console.log(req.sessionID)
-    return req.user ? res.send(req.user): res.sendStatus(401);
-    }
-)
-
-app.get('/',
-    (req, res) => {
-        console.log(req.session);
-        console.log(req.sessionID);
-        req.session.visited = true;
-        res.cookie("rememberme", "1", { expires: new Date(Date.now() + 60000), signed: true})
-        res.send("main page");
-    }
-);
-
 // app.post('/api/auth', (req, res) => {
 //         const { 
 //             body: {
