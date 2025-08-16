@@ -10,7 +10,7 @@ const router = Router();
 //display deck by name, or all decks if not found
 router.get('/api/deck', userLoggedIn, async (req, res) => {
     const { 
-        body: {
+        query: {
             deckname
         },
         user: {
@@ -18,27 +18,35 @@ router.get('/api/deck', userLoggedIn, async (req, res) => {
         }
     } = req;
     
-    const deck = await findDeckByName(deckname, id);
-    
-    if (deck) {
-        const deckInfo = {
-            name: deck.deckname,
-            alternative: deck.alternativeName,
-            cardCount: deck.cards ? deck.cards.length : 0,
-            
-        };
-        return res.send(deckInfo);
+    try {
+        
+        if (deckname) { 
+            const deck = await Deck.findOne(deckname, id) 
+
+            if (deck) {
+                const deckInfo = {
+                    name: deck.deckname,
+                    alternative: deck.alternativeName,
+                    cardCount: deck.cardIds ? deck.cardIds.length : 0,
+                    
+                };
+                return res.send(deckInfo);
+            }
+        }
+        const dbDecks = await Deck.find();
+        const allDecks = dbDecks.map(deck => ({
+        name: deck.deckname,
+        alternative: deck.alternativeName,
+        cardCount: deck.cardIds ? deck.cardIds.length : 0,
+        }));
+        
+        return res.send(allDecks);
+    } catch (err) {
+        console.log(err);
+        res.status(400).send({error: "Error Invalid Get request"});
     }
     
     //if deck not found return all decks
-    const dbDecks = await Deck.find();
-    const allDecks = dbDecks.map(deck => ({
-        name: deck.deckname,
-        alternative: deck.alternativeName,
-        cardCount: deck.cards ? deck.cards.length : 0,
-    }));
-    
-    return res.send(allDecks);
 });
 
 //add new deck
@@ -76,6 +84,7 @@ router.delete('/api/deck/remove/:deckname', userLoggedIn, async (req, res) => {
             id
         }
     } = req;
+<<<<<<< HEAD
     try {
         const deck = await findDeckByName(deckname, id);        
         if (!deck) return res.sendStatus(400);
@@ -84,6 +93,18 @@ router.delete('/api/deck/remove/:deckname', userLoggedIn, async (req, res) => {
     } catch (err) {
         console.log(err);
         res.sendStatus(400)
+=======
+
+    try {    
+        const deck = await findDeckByName(deckname, id);
+        if (!deck) return res.send({error: "Deck doesnt exist"}).status(400);
+        
+        await Deck.findOneAndDelete(deck);
+        return res.sendStatus(200);
+    } catch (err) {
+        console.log(err);
+        return res.sendStatus(400);
+>>>>>>> 3ae2517dea8f354cda1662094b9c320c32ae43b9
     }
 });
 
@@ -100,6 +121,7 @@ router.patch('/api/deck/edit', userLoggedIn, async (req, res) => {
         }
     } = req;
     
+<<<<<<< HEAD
     if (!deckname) return res.status(400).send({error: 'Deckname is required'})
     if (!newName) return res.status(400).send({ error: 'New name is required' });
     
@@ -109,6 +131,42 @@ router.patch('/api/deck/edit', userLoggedIn, async (req, res) => {
     } catch (err) {
         console.log(err);
         res.sendStatus(400);
+=======
+    try {
+        
+        if (!newName) {
+            return res.status(400).send({ error: 'New name is required' });
+        }
+        
+        const editDeck = await Deck.findOne({deckname: deckname, userId: id});
+
+        if (!editDeck) return res.status(400).send({error: "Deck not found"})
+        
+        //if new name already exists
+        const NameAlreadyExist = await Deck.findOne({deckname: newName, userId: id});
+        if (NameAlreadyExist) {
+            return res.status(400).send({ error: 'Deck name already exists' });
+        }
+        
+        editDeck.deckname = newName;
+        if (newAltName !== undefined) {
+            editDeck.alternativeName = newAltName
+        }
+
+        await editDeck.save();
+
+        const deckInfo = {
+            name: editDeck.deckname,
+            altName: editDeck.alternativeName,
+            cardCount: editDeck.cardIds ? editDeck.cardIds.length : 0,
+            id: editDeck.id
+        };
+        
+        return res.send(deckInfo);   
+    } catch (err) {
+        console.log(err);
+        return res.status(400).send({error: "Invalid Deck Request"})    
+>>>>>>> 3ae2517dea8f354cda1662094b9c320c32ae43b9
     }
 });
 
