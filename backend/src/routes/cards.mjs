@@ -1,116 +1,114 @@
 import { Router } from "express";
 import { checkSchema, matchedData, validationResult } from "express-validator";
-import { checkCardValidationSchemas } from "../utils/validationSchemas.mjs";
-import { findCardIndexById, findDeckIndexById, findDeckIndexByName } from "../utils/middleware.mjs";
-import { decks } from "../utils/consts.mjs";
+import { cardValidationSchema } from '../utils/validationSchemas.mjs'
+import { Card } from "../mongoose/schemas/card.mjs";
+import { Deck } from "../mongoose/schemas/deck.mjs";
+import { userLoggedIn } from "../utils/middleware.mjs";
 
 const router = Router();
 
-// show every card in specific deck
-router.get('/api/decks/:deckName/cards/',
-checkSchema(checkCardValidationSchemas),
-findDeckIndexByName,
-(req, res) => { 
-    const {
-        findDeckByName
-    } = req;
-    const data = matchedData(req);
-    const result = validationResult(req);
-    const findDeck = decks[findDeckByName];
-
-    if (!result) return res.status(400).send({ errors: result.array()});
-
-    if (!findDeck) return res.sendStatus(404);
-
-    if (data.filter && data.value) return res.send(findDeck.cards.filter(
-        (card) => card[data.filter].includes(data.value))
-    );
-
-    return res.send(findDeck.cards);
-});
-
-// show specific card in deck
-router.get('/api/decks/:deckName/cards/:cardId',
-findDeckIndexByName,
-findCardIndexById,
-(req, res) => { 
-    const {
-        findDeckByName,
-        indexOfCard
-    } = req;
-    const findDeck = decks[findDeckByName];
-    if (!findDeck) return res.sendStatus(404);
-    const findCard = findDeck.cards[indexOfCard];
-
-    return res.send(findCard);
-});
-
-// edit a specific card
-router.put('/api/decks/:deckName/cards/:cardId/edit',
-findDeckIndexByName,
-findCardIndexById,
-(req, res) => {
+//get all cards
+router.get('/api/deck/:deckname/cards', userLoggedIn, async (req, res) => {
     const { 
-        findDeckByName,
-        indexOfCard,
-        body,
+        query: {
+            deckname
+        },
+        user: {
+            id
+        } 
+    } = req;
+
+    try {
+        const deck = await Deck.findOne({deckname: deckname, userId: id});
+        if (!deck) return res.status(400).send({error: 'Deck doesnt exist'});
+        const cards = await Card.find({deckId: deck._id, userId: id});
+        if (!cards) {
+            cards = 0;
+        }
+        return res.send(cards)
+    } catch (err) {
+        console.log(err);
+        return res.sendStatus(400);
+    }
+});
+
+//create a new card in a deck
+router.post('/api/deck/:deckname/card', userLoggedIn, checkSchema(cardValidationSchema), async (req, res) => {
+    const result = validationResult(req);
+    if (!result.isEmpty()) return res.status(400).send({errors: result.array()});
+    const data = matchedData(req);
+    
+    try {    
+        const deck = await Deck.findOne({deckname: req.params.deckname, userId: req.user.id});
+        if (!deck) return res.status(400).send({error: 'Deck doesnt exist'});
+        const card = new Card({...data, userId: req.user.id, deckId: deck._id});
+        await card.save();
+        deck.cardIds.push(card._id);
+        await deck.save();
+        return res.status(200).send(card);
+    } catch (err) {
+        console.log(err);
+        return res.sendStatus(400);
+    }
+});
+
+//edit a card
+router.patch('/api/deck/:deckname/card/:cardId', userLoggedIn, async (req, res) => {
+    const {
         params: {
+            deckname,
             cardId
+        },
+        body: {
+            newQuestion,
+            newAnswer
+        },
+        user: {
+            id
         }
     } = req;
-        
-    const parsedId = parseInt(cardId);
-    decks[findDeckByName].cards[indexOfCard] = { card_id: parsedId, ...body};
-    return res.sendStatus(200);
+
+    try {
+        if (!newQuestion || !newAnswer) return res.status(400).send({erro: 'Neither question or answer can be empty'});
+        const deck = await Deck.findOne({deckname: deckname, userId: id});
+        if (!deck) return res.sendStatus(400);
+        const editCard = await Card.findOne({_id: cardId, deckId: deck._id, userId: id});
+        if (!editCard) return res.sendStatus(400);
+
+        editCard.answer = newAnswer;
+        editCard.question = newQuestion;
+        await editCard.save();
+        return res.status(200).send({answer: newAnswer, question: newQuestion});
+    } catch (err) {
+        console.log(err);
+        return res.sendStatus(400);
+    }
 });
 
-// router.patch('/api/decks/:deckName/cards/:cardId',
-//     findDeckIndexByName,
-//     findCardIndexById,
-//     (req, res) => {
-//         const { 
-//             findDeckByName,
-//             indexOfCard,
-//             body,
-//             params: {
-//                 cardId
-//             }
-//         } = req;
-        
-//         const parsedId = parseInt(cardId);
-//         decks[findDeckByName].cards[indexOfCard] = { card_id: parsedId, ...decks[findDeckByName].cards[indexOfCard], ...body};
-//         return res.sendStatus(200);
-//     }
-// );
-
-// delete a card by id
-router.delete('/api/decks/:deckName/cards/:cardId',
-findDeckIndexByName,
-findCardIndexById,
-(req, res) => {
-    const { 
-        findDeckByName,
-        indexOfCard
-    } = req;
-    decks[findDeckByName].cards.splice(indexOfCard, 1);
-    return res.sendStatus(200);
-});
-
-// add a new card
-router.post('/api/decks/:deckName/cards/create',
-checkSchema(checkCardValidationSchemas),
-(req, res) => {
+//delete a card
+router.delete('/api/deck/:deckname/card/:cardId', userLoggedIn, async (req, res) => {
     const {
-        findDeckByName
+        params: {
+            deckname,
+            cardId
+        },
+        user: {
+            id
+        }
     } = req;
-    const data = matchedData(req);
-    const result = validationResult(req);
-        
-    if (!result.isEmpty()) return res.status(400).send({ errors: result.array() })
 
-    const newCard = { card_id: decks[findDeckByName].cards.length, ...data};
-    decks[findDeckByName].cards.push(newCard);
-    return res.status(201).send(newCard);
+    try {
+        const deck = await Deck.findOne({deckname: deckname, userId: id});
+        if (!deck) return res.sendStatus(400);
+        const deleteCard = await Card.findOneAndDelete({_id: cardId, deckId: deck._id, userId: id});
+        if (!deleteCard) return res.status(400).send({error: 'Card not found'});
+        deck.cardIds.pull(deleteCard._id);
+        await deck.save();
+        return res.sendStatus(200);
+    } catch (err) {
+        console.log(err);
+        return res.sendStatus(403);
+    }
 });
 
 export default router;

@@ -21,7 +21,7 @@ router.get('/api/deck', userLoggedIn, async (req, res) => {
     try {
         
         if (deckname) { 
-            const deck = await Deck.findOne(deckname, id) 
+            const deck = await Deck.findOne({deckname: deckname, userId: id}) 
 
             if (deck) {
                 const deckInfo = {
@@ -33,7 +33,7 @@ router.get('/api/deck', userLoggedIn, async (req, res) => {
                 return res.send(deckInfo);
             }
         }
-        const dbDecks = await Deck.find();
+        const dbDecks = await Deck.find({userId: id});
         const allDecks = dbDecks.map(deck => ({
         name: deck.deckname,
         alternative: deck.alternativeName,
@@ -43,7 +43,7 @@ router.get('/api/deck', userLoggedIn, async (req, res) => {
         return res.send(allDecks);
     } catch (err) {
         console.log(err);
-        res.status(400).send({error: "Error Invalid Get request"});
+        res.sendStatus(400);
     }
     
     //if deck not found return all decks
@@ -84,27 +84,16 @@ router.delete('/api/deck/remove/:deckname', userLoggedIn, async (req, res) => {
             id
         }
     } = req;
-<<<<<<< HEAD
-    try {
-        const deck = await findDeckByName(deckname, id);        
-        if (!deck) return res.sendStatus(400);
-        await Deck.findOneAndDelete({userId: id, deckname: deckname});
-        return res.sendStatus(200);
-    } catch (err) {
-        console.log(err);
-        res.sendStatus(400)
-=======
 
     try {    
         const deck = await findDeckByName(deckname, id);
-        if (!deck) return res.send({error: "Deck doesnt exist"}).status(400);
+        if (!deck) return res.status(400).send({error: "Deck doesnt exist"});
         
-        await Deck.findOneAndDelete(deck);
+        await Deck.findOneAndDelete({deckname: deckname, userId: id});
         return res.sendStatus(200);
     } catch (err) {
         console.log(err);
         return res.sendStatus(400);
->>>>>>> 3ae2517dea8f354cda1662094b9c320c32ae43b9
     }
 });
 
@@ -121,17 +110,6 @@ router.patch('/api/deck/edit', userLoggedIn, async (req, res) => {
         }
     } = req;
     
-<<<<<<< HEAD
-    if (!deckname) return res.status(400).send({error: 'Deckname is required'})
-    if (!newName) return res.status(400).send({ error: 'New name is required' });
-    
-    try { 
-        await Deck.findOneAndUpdate(id, {deckname: convertNameFromUrl(newName), alternativeName: newAltName ? newAltName : deckname});
-        return res.send({deckname: newName, alternativeName: newAltName});   
-    } catch (err) {
-        console.log(err);
-        res.sendStatus(400);
-=======
     try {
         
         if (!newName) {
@@ -165,8 +143,7 @@ router.patch('/api/deck/edit', userLoggedIn, async (req, res) => {
         return res.send(deckInfo);   
     } catch (err) {
         console.log(err);
-        return res.status(400).send({error: "Invalid Deck Request"})    
->>>>>>> 3ae2517dea8f354cda1662094b9c320c32ae43b9
+        return res.sendStatus(400);   
     }
 });
 
