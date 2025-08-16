@@ -67,20 +67,24 @@ router.post('/api/deck/create', userLoggedIn, checkSchema(deckValidationSchemas)
 });
 
 //remove deck by name
-router.delete('/api/deck/remove', userLoggedIn, async (req, res) => {
+router.delete('/api/deck/remove/:deckname', userLoggedIn, async (req, res) => {
     const { 
-        body: {
+        params: {
             deckname
         },
         user: {
             id
         }
     } = req;
-    const deck = await findDeckByName(deckname, id);
-    if (!deck) return res.send({error: "Deck doesnt exist"}).status(400);
-    await Deck.findOneAndDelete(deck);
-    
-    return res.sendStatus(200);
+    try {
+        const deck = await findDeckByName(deckname, id);        
+        if (!deck) return res.sendStatus(400);
+        await Deck.findOneAndDelete({userId: id, deckname: deckname});
+        return res.sendStatus(200);
+    } catch (err) {
+        console.log(err);
+        res.sendStatus(400)
+    }
 });
 
 //rename deck
@@ -96,33 +100,16 @@ router.patch('/api/deck/edit', userLoggedIn, async (req, res) => {
         }
     } = req;
     
-    if (!newName) {
-        return res.status(400).send({ error: 'New name is required' });
+    if (!deckname) return res.status(400).send({error: 'Deckname is required'})
+    if (!newName) return res.status(400).send({ error: 'New name is required' });
+    
+    try { 
+        await Deck.findOneAndUpdate(id, {deckname: convertNameFromUrl(newName), alternativeName: newAltName ? newAltName : deckname});
+        return res.send({deckname: newName, alternativeName: newAltName});   
+    } catch (err) {
+        console.log(err);
+        res.sendStatus(400);
     }
-    
-    
-    const deckIndex = decks.findIndex(deck => deck.name === convertNameFromUrl(deckname));
-    
-    if (deckIndex === -1) {
-        return res.status(404).send({ error: 'Deck not found' });
-    }
-    
-    //if new name already exists
-    const existingDeck = decks.find(deck => deck.name === newName);
-    if (existingDeck) {
-        return res.status(400).send({ error: 'Deck name already exists' });
-    }
-    
-    decks[deckIndex].name = newName;
-    
-    const deckInfo = {
-        name: decks[deckIndex].name,
-        cardCount: decks[deckIndex].cards ? decks[deckIndex].cards.length : 0,
-        id: decks[deckIndex].id
-    };
-    
-    return res.send(deckInfo);
 });
-
 
 export default router;
