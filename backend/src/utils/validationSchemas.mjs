@@ -60,25 +60,34 @@ export const userValidationSchema = {
     },
 }
 
-export const checkCardValidationSchemas = {
-    filter: {
-        isString: {
-            errorMessage:
-                "Card filter must be string"
+export const cardValidationSchema = {
+    question: {
+        isLength: {
+            options: { min: 1, max: 500 },
+            errorMessage: 'Question must be between 1 and 500 characters'
+        },
+        notEmpty: {
+            errorMessage: 'Question is required'
         }
     },
-    value: {
-        isString: {
-            errorMessage:
-                "Card value must be string"
-        },
+    answer: {
         isLength: {
-            options: {
-                min: 1
-            }
+            options: { min: 1, max: 500 },
+            errorMessage: 'Answer must be between 1 and 500 characters'
+        },
+        notEmpty: {
+            errorMessage: 'Answer is required'
+        }
+    },
+    deckId: {
+        isMongoId: {
+            errorMessage: 'Invalid deck ID format'
+        },
+        notEmpty: {
+            errorMessage: 'Deck ID is required'
         }
     }
-}
+};
 
 export const checkQuerryValidationSchemas = {
     filter: {
