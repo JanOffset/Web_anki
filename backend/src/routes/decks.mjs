@@ -7,6 +7,15 @@ import { userLoggedIn } from "../utils/middleware.mjs";
 
 const router = Router();
 
+router.get('/api/deck/all', async (req, res) => {
+  try {
+    const decks = await Deck.find(); // fetch all decks from all users
+    res.json(decks);
+  } catch (err) {
+    res.status(500).json({ error: 'Error fetching decks' });
+  }
+});
+
 //display deck by name, or all decks if not found
 router.get('/api/deck', userLoggedIn, async (req, res) => {
     const { 

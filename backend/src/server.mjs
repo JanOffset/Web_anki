@@ -3,6 +3,7 @@ import routes from './routes/index.mjs'
 import cookieParser from "cookie-parser"
 import session from "express-session"
 import passport from "passport";
+import cors from "cors"
 import 'dotenv/config'
 import "./strategies/local-strategy.mjs"
 import mongoose from "mongoose"
@@ -16,6 +17,11 @@ mongoose.connect('mongodb://localhost:27017/Web_anki')
     .catch((err) => console.log(err))
 // await runDbMigration();
 // orm oriented
+
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true
+}));
 app.use(
     session({
         secret: "sessionSecret123",

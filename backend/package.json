@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "express-session": "^1.18.1",
@@ -11,7 +12,8 @@
     "pg": "^8.16.1"
   },
   "scripts": {
-    "start": "node src/server.mjs"
+    "start": "node src/server.mjs",
+    "backend": "npm start --prefix backend"
   },
   "type": "module"
 }
